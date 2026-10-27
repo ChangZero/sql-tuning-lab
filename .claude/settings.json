@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./bin/osql:*)",
+      "Bash(./bin/oplan:*)",
+      "Bash(./bin/ocheck:*)",
+      "Bash(OSQL_TIMEOUT=* ./bin/osql:*)",
+      "Bash(OSQL_TIMEOUT=* ./bin/oplan:*)",
+      "Bash(OSQL_TIMEOUT=* ./bin/ocheck:*)"
+    ]
+  }
+}

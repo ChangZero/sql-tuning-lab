@@ -1,0 +1,14 @@
+-- P002 / t1 — 2012년 3월 상품유형별 판매수량 상위 3개 상품
+-- 문제: ../../problems/P002-item-type-top3-analytic.md
+--
+-- 출력 컬럼: TYPE_NM, ITEM_NM, QTY, RNK, QTY_PCT   (이 순서, 별칭까지 이대로)
+-- 정렬     : ITEM_TYPE_CD ASC, RNK ASC, ITEM_NM ASC   (ITEM_TYPE_CD 는 출력하지 않음)
+-- 결과     : 18행
+-- 제약     : 오라클 전용 문법(ANSI 조인 금지) / TYPE_NM 은 COM_CD 조인으로(DECODE 금지)
+--            ROWNUM 으로 자르지 않기 / 순위는 RANK 기준 3위 이내
+--            QTY_PCT = 유형 전체 합계 대비 비중, ROUND(...,1)
+--            힌트(/*+ */) 금지 / 기간 20120301~20120331
+--
+-- 아래에 SQL 한 개만 쓴다. 끝에 세미콜론 없이, SQL 중간에 빈 줄을 넣지 않는다.
+-- 다 썼으면  /grade P002     (다시 풀 때는 같은 폴더에 t2.sql 로 복사해서)
+

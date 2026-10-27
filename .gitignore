@@ -1,0 +1,11 @@
+# sqlplus / 러너 임시파일
+osql.*
+*.lst
+*.log
+*.trc
+
+# 에디터·OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

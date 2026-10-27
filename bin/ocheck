@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# ocheck — 두 SQL의 결과셋이 동일한지 검증
+#   ocheck answers/P001.sql attempts/P001-try1.sql
+# 정렬 후 비교하므로 ORDER BY 유무와 무관하게 "집합으로서 같은지"를 본다.
+# 문제가 정렬 순서를 요구하면 --ordered 로 순서까지 비교.
+set -uo pipefail
+source "$(dirname "$(readlink -f "$0")")/_common.sh"
+
+ORDERED=0
+[ "${1:-}" = "--ordered" ] && { ORDERED=1; shift; }
+EXPECTED="${1:?정답 SQL 파일}"; ACTUAL="${2:?제출 SQL 파일}"
+mkdir -p "$WORK"; trap 'rm -rf "$WORK"' EXIT
+
+dump() {  # $1=sql파일 $2=출력파일
+  {
+    echo "set markup csv on delimiter | quote off"
+    echo "set linesize 32767 pagesize 0 feedback off termout on trimspool on heading on"
+    cat "$1" | ensure_terminator
+    echo "exit"
+  } > "$WORK/d.sql"
+  run_in_container "$WORK/d.sql" > "$2" 2>&1
+}
+
+dump "$EXPECTED" "$WORK/exp.csv"
+dump "$ACTUAL"   "$WORK/act.csv"
+
+for f in exp act; do
+  if grep -q '^ORA-\|^SP2-' "$WORK/$f.csv"; then
+    echo "!! $( [ $f = exp ] && echo 정답 || echo 제출 ) SQL 에서 오류 발생:"
+    grep -m3 '^ORA-\|^SP2-' "$WORK/$f.csv"
+    exit 1
+  fi
+done
+
+norm() { grep -v '^[[:space:]]*$' "$1" | sed -e 's/[[:space:]]*$//'; }
+if [ "$ORDERED" = 1 ]; then
+  norm "$WORK/exp.csv" > "$WORK/e.n"; norm "$WORK/act.csv" > "$WORK/a.n"
+else
+  norm "$WORK/exp.csv" | sort > "$WORK/e.n"; norm "$WORK/act.csv" | sort > "$WORK/a.n"
+fi
+
+ec=$(wc -l < "$WORK/e.n"); ac=$(wc -l < "$WORK/a.n")
+if diff -q "$WORK/e.n" "$WORK/a.n" >/dev/null; then
+  echo "PASS  결과셋 일치 ($((ec-1)) 행)"
+  exit 0
+fi
+echo "FAIL  결과셋 불일치 — 정답 $((ec-1))행 / 제출 $((ac-1))행"
+echo
+echo "── 차이 (< 정답, > 제출, 최대 20줄) ─────────────"
+diff "$WORK/e.n" "$WORK/a.n" | head -20
+exit 1

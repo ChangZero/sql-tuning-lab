@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# oplan — SQL을 실제로 실행한 뒤 실측 실행계획(A-Rows/A-Time/Buffers)을 출력
+#   oplan query.sql
+#   oplan -c "select ... "
+# 결과 행은 화면에 찍지 않지만 전체 fetch 는 수행한다(실측치를 정확히 내기 위해).
+set -uo pipefail
+source "$(dirname "$(readlink -f "$0")")/_common.sh"
+
+FMT="${OPLAN_FORMAT:-ALLSTATS LAST +COST}"
+mkdir -p "$WORK"; trap 'rm -rf "$WORK"' EXIT
+
+{
+  sql_header
+  echo "alter session set statistics_level = all;"
+  echo "set termout off feedback off timing off"
+  echo "spool /tmp/oplan_rows_$$.txt"
+  read_sql_arg "$@" | ensure_terminator
+  echo "spool off"
+  echo "set termout on"
+  echo "set pagesize 1000 linesize 200"
+  echo "select * from table(dbms_xplan.display_cursor(null,null,'$FMT'));"
+  echo "exit"
+} > "$WORK/run.sql"
+
+out="$(run_in_container "$WORK/run.sql")"
+echo "$out"
+
+# 실측 요약 추출 — 헤더에서 컬럼 위치를 찾아 Id 0 행의 값을 뽑는다
+printf '%s' "$out" | awk -F'|' '
+  /A-Rows/ && /Buffers/ && !hdr {
+    hdr=1
+    for (i=1; i<=NF; i++) { g=$i; gsub(/^[ \t]+|[ \t]+$/,"",g); col[g]=i }
+    next
+  }
+  hdr && $2 ~ /^[ \t]*0[ \t]*$/ {
+    printf "\n-- 실측 요약 (Id 0) --------------------------------\n"
+    n=split("A-Rows A-Time Buffers Reads", ks, " ")
+    for (j=1; j<=n; j++) {
+      k=ks[j]
+      if (k in col) { v=$(col[k]); gsub(/^[ \t]+|[ \t]+$/,"",v); printf "  %-8s = %s\n", k, v }
+    }
+    exit
+  }'

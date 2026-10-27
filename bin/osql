@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# osql — Oracle 컨테이너에서 SQL 실행하고 결과 출력
+#   osql query.sql
+#   osql -c "select count(*) from ord"
+#   cat q.sql | osql -
+set -uo pipefail
+source "$(dirname "$(readlink -f "$0")")/_common.sh"
+
+mkdir -p "$WORK"; trap 'rm -rf "$WORK"' EXIT
+{
+  sql_header
+  read_sql_arg "$@" | ensure_terminator
+  echo "exit"
+} > "$WORK/run.sql"
+
+run_in_container "$WORK/run.sql"
