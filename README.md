@@ -3,6 +3,11 @@
 WSL2 도커의 Oracle 19c(`oracle19c-ee` / `dev@ORCLPDB1`)에 붙어서
 **오라클 문법 기준 SQL 연습문제를 출제하고, 실제 실행해서 채점하는** Claude Code 워크스페이스.
 
+## 처음 셋팅할 때
+문제를 풀려면 Oracle 19c 에 `DEV` 스키마가 이 구성대로 들어 있어야 한다.
+[setup/](setup/) 의 스크립트를 번호 순서대로 돌리면 된다 (`setup/README.md` 에 순서·소요시간·용량 요구사항).
+`setup/99_verify.sql` 로 건수와 클러스터링 팩터가 기준값과 맞는지 확인하고 시작한다.
+
 ## 쓰는 법
 ```
 /quiz                    # 이력을 보고 알아서 다음 문제
@@ -64,6 +69,7 @@ WSL2 도커의 Oracle 19c(`oracle19c-ee` / `dev@ORCLPDB1`)에 붙어서
 ## 구조
 ```
 CLAUDE.md                    에이전트 규칙 (오라클 문법 강제, 정답 비공개 등)
+setup/                       테스트 DB 스키마·데이터 셋업 스크립트 (01~07, 99 검증)
 docs/SCHEMA.md               스키마 레퍼런스
 docs/ORACLE-SYNTAX.md        출제·채점 문법 규칙
 docs/TUNING-PLAYBOOK.md      진단 순서와 이 스키마의 교보재
